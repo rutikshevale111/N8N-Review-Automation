@@ -1,0 +1,432 @@
+{
+  "name": "Ai Review automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "10Rcd7HBZbbzAZs4KsbeU_0EDiAKK_TRT2dUcWtAwRx4",
+          "mode": "list",
+          "cachedResultName": "Customer Experience Feedback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10Rcd7HBZbbzAZs4KsbeU_0EDiAKK_TRT2dUcWtAwRx4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 542886983,
+          "mode": "list",
+          "cachedResultName": "Form responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10Rcd7HBZbbzAZs4KsbeU_0EDiAKK_TRT2dUcWtAwRx4/edit#gid=542886983"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        640
+      ],
+      "id": "d809c61c-4809-4ab2-a89f-51f1100d5f16",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "7HKVUwtFLlRHXVp6",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5ff40628-f800-49e0-938c-91c3a303c168",
+              "leftValue": "={{$json[\"How was your experience today?\"]}}",
+              "rightValue": "Excellent",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "4e792b3a-c94b-4b31-8dd0-685db11b6a1b",
+              "leftValue": "={{ $json['Can we send you a WhatsApp message with a review link?'] }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2592,
+        -304
+      ],
+      "id": "12b15b78-6597-47fd-901a-fd421b0a358e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=AIzaSyD0wovXBQdQcQsBrQriB5FkxhFWvDyMZCQ\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n \"contents\": [\n  {\n   \"parts\": [\n    {\n     \"text\": \"Write a short positive Google review in 2 lines for a local service business. Use different words every time. Write one short Google review under 15 words.Friendly tone.\"\n    }\n   ]\n  }\n ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2080,
+        -336
+      ],
+      "id": "5bc06349-5b51-40c3-beb2-236bc9f443f3",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "from": "whatsapp:+14155238886",
+        "to": "whatsapp:+918554025628",
+        "message": "=Hi {{$json[\"Name\"]}} 😊\n\nThank you for visiting us today.\n\nSuggested review:\n\n{{$json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"]}}\n\nYou can post it here:\nhttps://g.page/r/CXlh4uqr8YEWEBM/review\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        624
+      ],
+      "id": "9c663b83-0b67-44dd-9120-57fa2882e150",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "gUnsAK3SZ5GpszDW",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fad036f1-ab68-4407-a81a-f32730803096",
+              "name": "review",
+              "value": "={{$json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1856,
+        -320
+      ],
+      "id": "14274d9f-c9f3-424d-95d7-25f20b0f1945",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2304,
+        -320
+      ],
+      "id": "648eaba2-d191-4945-b1d1-2881251688a1",
+      "name": "Wait",
+      "webhookId": "fdb006e3-56fd-42e1-b61c-56f877c5535e"
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Review</title>\n\n<style>\nbody {\n  font-family: Arial;\n  background: linear-gradient(135deg,#667eea,#764ba2);\n  margin:0;\n}\n\n.container {\n  max-width: 400px;\n  margin: 40px auto;\n  background: white;\n  padding: 20px;\n  border-radius: 15px;\n  text-align: center;\n}\n\n.review-box {\n  background: #f2f2f2;\n  padding: 15px;\n  border-radius: 10px;\n  margin-bottom: 15px;\n}\n\nbutton {\n  width: 100%;\n  padding: 12px;\n  margin-top: 10px;\n  border: none;\n  border-radius: 10px;\n  font-size: 16px;\n}\n\n.copy {\n  background: green;\n  color: white;\n}\n\n.google {\n  background: blue;\n  color: white;\n}\n</style>\n\n<script>\nfunction copyReview() {\n  var text = document.getElementById(\"review\").innerText;\n\n  var textarea = document.createElement(\"textarea\");\n  textarea.value = text;\n  document.body.appendChild(textarea);\n  textarea.select();\n  document.execCommand(\"copy\");\n  document.body.removeChild(textarea);\n\n  alert(\"Copied!\");\n}\n\nfunction goToGoogle() {\n  window.location.href = \"https://g.page/r/CXlh4uqr8YEWEBM/review\";\n}\n</script>\n\n</head>\n\n<body>\n\n<div class=\"container\">\n  <h2>Your Review</h2>\n\n  <div class=\"review-box\" id=\"review\">\n    {{$json.review}}\n  </div>\n\n  <button class=\"copy\" onclick=\"copyReview()\">Copy Review</button>\n\n  <button class=\"google\" onclick=\"goToGoogle()\">Post on Google</button>\n</div>\n\n</body>\n</html>",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1600,
+        -288
+      ],
+      "id": "1f0a0d77-414b-4c39-92cf-5f5489f665be",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "review-form",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3168,
+        -368
+      ],
+      "id": "cc158c96-2d39-4483-80dc-159147c43b90",
+      "name": "Webhook",
+      "webhookId": "417dd8ac-0f38-4514-bdcf-44b35e991bcc"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10Rcd7HBZbbzAZs4KsbeU_0EDiAKK_TRT2dUcWtAwRx4",
+          "mode": "list",
+          "cachedResultName": "Customer Experience Feedback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10Rcd7HBZbbzAZs4KsbeU_0EDiAKK_TRT2dUcWtAwRx4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 542886983,
+          "mode": "list",
+          "cachedResultName": "Form responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10Rcd7HBZbbzAZs4KsbeU_0EDiAKK_TRT2dUcWtAwRx4/edit#gid=542886983"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ new Date().toISOString() }}",
+            "How was your experience today?": "={{ $json.body.data.fields[2].value[0] }}",
+            "Consent": "=",
+            "Score": "5",
+            "Your Name": "={{ $json.body.data.fields[0].value }}",
+            "Phone Number": "={{ $json.body.data.fields[1].value }}",
+            "I agree to share my feedback publicly": "={{ $json.body.data.fields[3].value }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Your Name",
+              "displayName": "Your Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "How was your experience today?",
+              "displayName": "How was your experience today?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "I agree to share my feedback publicly",
+              "displayName": "I agree to share my feedback publicly",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Consent",
+              "displayName": "Consent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2848,
+        -320
+      ],
+      "id": "a765467a-5689-41c5-b57c-251f677f9462",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rQRj3CU4eQb0Ohge",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "fdb139ec-c59f-42a8-9813-83509a4a9814",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f9cb1cc170f05c6021ec678c4f3fb8a64b026ec69373ab9f7840b83938b1c330"
+  },
+  "id": "nKn9DaLsUpdlPE2R",
+  "tags": []
+}
